@@ -1,0 +1,65 @@
+name: Publish content
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'content/posts/**/*.md'
+
+permissions:
+  contents: read
+
+jobs:
+  build-site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy-site:
+    runs-on: ubuntu-latest
+    needs: build-site
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deploy
+
+  sync-wechat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Sync WeChat drafts
+        run: node scripts/sync-wechat.js
+        env:
+          GIT_BASE_SHA: ${{ github.event.before }}
+          GIT_HEAD_SHA: ${{ github.sha }}
+          WECHAT_APP_ID: ${{ secrets.WECHAT_APP_ID }}
+          WECHAT_APP_SECRET: ${{ secrets.WECHAT_APP_SECRET }}
+          WECHAT_ACCESS_TOKEN: ${{ secrets.WECHAT_ACCESS_TOKEN }}
+          WECHAT_THUMB_MEDIA_ID: ${{ secrets.WECHAT_THUMB_MEDIA_ID }}

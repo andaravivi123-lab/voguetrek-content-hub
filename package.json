@@ -1,0 +1,14 @@
+{
+  "name": "voguetrek-content-hub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Content publishing automation for 艾优享趣 voguetrek",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-site.js"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "markdown-it": "^15.0.3"
+  }
+}
